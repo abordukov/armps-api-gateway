@@ -1,0 +1,109 @@
+server:
+  port: 8096
+  forward-headers-strategy: framework
+
+logging:
+  level:
+    org.springframework.cloud.gateway.handler.RoutePredicateHandlerMapping: ERROR
+    reactor:
+      netty: ERROR
+    org:
+      springframework:
+        cloud:
+          gateway: ERROR
+
+eureka:
+  instance:
+    hostname: localhost
+
+spring:
+  cloud:
+    gateway:
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:8095"
+            allowedHeaders: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+      httpclient:
+        wiretap: true
+      httpserver:
+        wiretap: true
+      routes:
+
+        - id: armps
+          uri: http://10.10.10.198:8088/armps/
+          predicates:
+            - Path=/armps/**
+          filters:
+            - RewritePath=/armps/(?<path>.*), /$\{path}
+          metadata:
+            swagger-path: "v2/api-docs?group=rest-v1"
+
+        - id: loyalty
+          uri: http://10.10.10.70:32475/
+          predicates:
+            - Path=/api/v4/ikb/**
+          metadata:
+            swagger-path: "swagger/v4/swagger.json"
+          filters:
+            - RewritePath=(?<path>.*), /$\{path}
+
+        - id: blanks
+          uri: http://10.10.10.198:8093/
+          predicates:
+            - Path=/render/**,/skdr/**
+          metadata:
+            swagger-path: "v3/api-docs/render"
+          filters:
+            - RewritePath=(?<path>.*), /$\{path}
+
+        - id: adapter
+          uri: http://dp-signature-adapter.arm.invitro-dev.k8s/
+          predicates:
+            - Path=/adapter/**
+          metadata:
+            swagger-path: "v3/api-docs/adapter"
+          filters:
+            - RewritePath=(?<path>.*), /$\{path}
+
+        - id: report
+          uri: http://report.arm.invitro-dev.k8s/
+          predicates:
+            - Path=/report/**
+          metadata:
+            swagger-path: "v3/api-docs/reports"
+          filters:
+            - RewritePath=(?<path>.*), /$\{path}
+
+        - id: armps-webapp
+          uri: http://10.10.10.198:8088/armps/
+          predicates:
+            - Path=/armps/blanks/**
+          filters:
+            - RewritePath=/armps/(?<path>.*), /$\{path}
+          metadata:
+            swagger-path: "v2/api-docs?group=webapp-v1"
+
+  main:
+    web-application-type: reactive
+    allow-bean-definition-overriding: true
+  integration:
+    management:
+      default-logging-enabled: true
+
+springdoc:
+  swagger-ui:
+    disable-swagger-default-url: true
+    use-root-path: true
+  show-actuator: true
+  api-docs:
+    groups:
+      enabled: true
+    enabled: true
+

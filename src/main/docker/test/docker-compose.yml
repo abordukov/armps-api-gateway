@@ -1,0 +1,13 @@
+version: "3"
+services:
+  api-gateway:
+    image: "docker-registry.invitro.ru/armps-api-gateway:0.0.1-SNAPSHOT"
+    restart: unless-stopped
+    environment:
+      - ELASTIC_APM_ENVIRONMENT=test
+      - JAVA_OPTS=-Dfile.encoding=UTF-8 -Dspring.profiles.active=test -Xms1024m -Xmx2048m
+      - LOG_FILE=/var/log/armps-api-gateway.log
+    volumes:
+      - /srv/micoservices/armps-api-gateway:/var/log
+    ports:
+      - "8095:8080"
